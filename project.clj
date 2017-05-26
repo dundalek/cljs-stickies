@@ -5,7 +5,9 @@
                  [re-frame "0.9.2"]]
 
   :plugins [[lein-cljsbuild "1.1.4"]
-            [lein-less "1.7.5"]]
+            [lein-less "1.7.5"]
+            [lein-kibit "0.1.3"]
+            [lein-pdo "0.1.1"]]
 
   :min-lein-version "2.5.3"
 
@@ -24,8 +26,15 @@
    {:dependencies [[binaryage/devtools "0.8.2"]]
 
     :plugins      [[lein-figwheel "0.5.9"]
-                   [lein-doo "0.1.7"]]
-    }}
+                   [lein-doo "0.1.7"]]}}
+
+  :aliases
+  {"dev" ["do" "clean"
+            ["pdo" ["figwheel" "dev"]
+                   ["less" "auto"]]]
+   "build" ["do" "clean"
+              ["cljsbuild" "once" "min"]
+              ["less" "once"]]}
 
   :cljsbuild
   {:builds
@@ -38,8 +47,8 @@
                     :asset-path           "js/compiled/out"
                     :source-map-timestamp true
                     :preloads             [devtools.preload]
-                    :external-config      {:devtools/config {:features-to-install :all}}
-                    }}
+                    :external-config      {:devtools/config {:features-to-install :all}}}}
+
 
     {:id           "min"
      :source-paths ["src/cljs"]
@@ -54,7 +63,4 @@
      :compiler     {:main          stickies.runner
                     :output-to     "resources/public/js/compiled/test.js"
                     :output-dir    "resources/public/js/compiled/test/out"
-                    :optimizations :none}}
-    ]}
-
-  )
+                    :optimizations :none}}]})
