@@ -32,9 +32,7 @@
         [:div.sticky
           {:style
             {:background color
-             :transform (str "rotate(" rotate ")")
-             :top y
-             :left x}}
+             :transform (str "translate(" x "px," y "px) " "rotate(" rotate ")")}}
           [:div.sticky-header name]
           [:div.sticky-content content]]))))
 
