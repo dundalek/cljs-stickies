@@ -6,3 +6,8 @@
  :name
  (fn [db]
    (:name db)))
+
+(re-frame/reg-sub
+ :notes
+ (fn [db]
+   (vals (:notes db))))
