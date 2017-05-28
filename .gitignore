@@ -7,3 +7,4 @@ out
 /resources/public/css/site.css
 .lein-repl-history
 .nrepl-port
+node_modules

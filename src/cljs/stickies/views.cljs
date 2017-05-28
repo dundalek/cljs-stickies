@@ -2,12 +2,15 @@
     (:require [re-frame.core :as re-frame]
               [reagent.core :as r]))
 
+(def transform (r/atom #js{:x 0 :y 0 :k 1}))
+
 (def container-target
   #js {:drop (fn [props monitor component]
                 (let [item (.getItem monitor)
                       delta (.getDifferenceFromInitialOffset monitor)
-                      x (js/Math.round (+ (.-x item) (.-x delta)))
-                      y (js/Math.round (+ (.-y item) (.-y delta)))
+                      scale (.-k @transform)
+                      x (js/Math.round (+ (.-x item) (/ (.-x delta) scale)))
+                      y (js/Math.round (+ (.-y item) (/ (.-y delta) scale)))
                       id (.-id item)]
                   (re-frame/dispatch [:update-note id {:x x :y y}])
                   js/undefined))})
@@ -36,12 +39,15 @@
           [:div.sticky-header name]
           [:div.sticky-content content]]))))
 
-(defn container-component [{notes :notes connect-drop-target :connectDropTarget draggable-sticky :draggableSticky}]
+(defn container-component [{notes :notes connect-drop-target :connectDropTarget draggable-sticky :draggableSticky transform :transform}]
   (connect-drop-target
     (r/as-element
       [:div.container
-        (for [note (js->clj notes :keywordize-keys true)]
-          ^{:key (:id note)} [draggable-sticky note])])))
+        [:div
+          {:style
+            {:transform (str "translate(" (.-x transform) "px," (.-y transform) "px) " "scale(" (.-k transform) ")")}}
+          (for [note (js->clj notes :keywordize-keys true)]
+            ^{:key (:id note)} [draggable-sticky note])]])))
 
 (defn main-panel []
   (let [notes (re-frame/subscribe [:notes])
@@ -54,7 +60,15 @@
             ((drop-target "note" container-target container-collect) (r/reactify-component container-component)))
         draggable-sticky
           (r/adapt-react-class
-            ((drag-source "note" sticky-source sticky-collect) (r/reactify-component sticky-component)))]
+            ((drag-source "note" sticky-source sticky-collect) (r/reactify-component sticky-component)))
+        el (.select js/d3 "#app")
+        zoom (-> js/d3
+                 .zoom
+                 (.filter #(or
+                             (= js/d3.event.type "wheel")
+                             (not (re-find #"sticky" js/d3.event.target.className))))
+                 (.on "zoom" (fn [] (reset! transform (.-event.transform js/d3)))))]
+    (.call el zoom)
     (fn []
       [context-provider {:backend backend}
-        [droppable-container {:notes @notes :draggable-sticky draggable-sticky}]])))
+        [droppable-container {:notes @notes :draggable-sticky draggable-sticky :transform @transform}]])))
