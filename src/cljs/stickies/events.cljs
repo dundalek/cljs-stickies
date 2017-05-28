@@ -10,4 +10,14 @@
 (re-frame/reg-event-db
  :update-note
  (fn  [db [_ id data]]
-   (update-in db [:notes id] #(merge % data))))
+   (let [next-db (update-in db [:notes id] #(merge % data))]
+      ; (js/console.log (prn-str (vals (:notes next-db))))
+      next-db)))
+
+(re-frame/reg-event-db
+ :set-notes
+ (fn  [db [_ notes]]
+   (->> notes
+     (map #(assoc % :rotate "0"))
+     (reduce #(assoc %1 (:id %2) %2) {})
+     (assoc db :notes))))

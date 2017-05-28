@@ -2,7 +2,8 @@
     (:require [re-frame.core :as re-frame]
               [reagent.core :as r]))
 
-(def transform (r/atom #js{:x 0 :y 0 :k 1}))
+(def initial-transform #js{:x -135 :y 135 :k 0.35})
+(def transform (r/atom initial-transform))
 
 (def container-target
   #js {:drop (fn [props monitor component]
@@ -37,7 +38,8 @@
             {:background color
              :transform (str "translate(" x "px," y "px) " "rotate(" rotate ")")}}
           [:div.sticky-header name]
-          [:div.sticky-content content]]))))
+          ; [:div.sticky-content content]
+          [:div.sticky-content ""]]))))
 
 (defn container-component [{notes :notes connect-drop-target :connectDropTarget draggable-sticky :draggableSticky transform :transform}]
   (connect-drop-target
@@ -49,9 +51,14 @@
           (for [note (js->clj notes :keywordize-keys true)]
             ^{:key (:id note)} [draggable-sticky note])]])))
 
-(defn main-panel []
+(defn main-container [props]
   (let [notes (re-frame/subscribe [:notes])
-        context-provider (r/adapt-react-class (.-DragDropContextProvider js/ReactDnD))
+        droppable-container (:droppable-container props)]
+    (fn []
+      [droppable-container (merge props {:notes @notes :transform @transform})])))
+
+(defn main-panel []
+  (let [context-provider (r/adapt-react-class (.-DragDropContextProvider js/ReactDnD))
         drag-source (.-DragSource js/ReactDnD)
         drop-target (.-DropTarget js/ReactDnD)
         backend (aget js/ReactDnDHTML5Backend "default")
@@ -67,8 +74,11 @@
                  (.filter #(or
                              (= js/d3.event.type "wheel")
                              (not (re-find #"sticky" js/d3.event.target.className))))
-                 (.on "zoom" (fn [] (reset! transform (.-event.transform js/d3)))))]
+                 (.on "zoom" (fn [] (reset! transform (.-event.transform js/d3)))))
+        initial-zoom (-> (.-zoomIdentity js/d3)
+                         (.translate (.-x initial-transform) (.-y initial-transform))
+                         (.scale (.-k initial-transform)))]
     (.call el zoom)
-    (fn []
-      [context-provider {:backend backend}
-        [droppable-container {:notes @notes :draggable-sticky draggable-sticky :transform @transform}]])))
+    (.transform zoom el initial-zoom)
+    [context-provider {:backend backend}
+      [main-container {:draggable-sticky draggable-sticky :droppable-container droppable-container}]]))
