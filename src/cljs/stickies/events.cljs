@@ -23,6 +23,12 @@
       (fn [db [_ id data]]
          (update-item id (dissoc ((:notes db) id) :rotate)))))
 
+(def add-item-interceptor
+   (re-frame/after
+      (fn [db [_ data]]
+        (let [id (:id data)]
+          (update-item id (dissoc ((:notes db) id) :rotate))))))
+
 (re-frame/reg-event-db
  :initialize-db
  (fn  [_ _]
@@ -37,9 +43,23 @@
       next-db)))
 
 (re-frame/reg-event-db
+ :add-note
+ [add-item-interceptor]
+ (fn  [db [_ data]]
+   (assoc-in db [:notes (:id data)] data)))
+
+(re-frame/reg-event-db
  :set-notes
  (fn  [db [_ notes]]
    (->> notes
      (map #(assoc % :rotate "0"))
      (reduce #(assoc %1 (:id %2) %2) {})
      (assoc db :notes))))
+
+(re-frame/reg-event-db
+ :update-note
+ [update-item-interceptor]
+ (fn  [db [_ id data]]
+   (let [next-db (update-in db [:notes id] #(merge % data))]
+      ; (js/console.log (prn-str (vals (:notes next-db))))
+      next-db)))

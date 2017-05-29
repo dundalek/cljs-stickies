@@ -2,7 +2,7 @@
     (:require [re-frame.core :as re-frame]
               [reagent.core :as r]))
 
-(def initial-transform #js{:x -135 :y 135 :k 0.35})
+(def initial-transform #js{:x 200 :y 90 :k 0.35})
 (def transform (r/atom initial-transform))
 
 (def container-target
@@ -45,9 +45,27 @@
   (connect-drop-target
     (r/as-element
       [:div.container
+        {:on-click
+          (fn [ev]
+            (let [scale (.-k transform)
+                  x (/ (- (.-clientX ev) (.-x transform)) scale)
+                  y (/ (- (.-clientY ev) (.-y transform)) scale)
+                  name (js/window.prompt "Enter a new note title")]
+               (when (not (clojure.string/blank? name))
+                 (let [id (str (clojure.string/replace name #"\.md$" "") ".md")]
+                    (re-frame/dispatch
+                      [:add-note
+                        {:id id
+                         :name id
+                         :x x
+                         :y y
+                         :color "#ffc"
+                         :rotate "0"
+                         :content ""}])))))}
         [:div
           {:style
-            {:transform (str "translate(" (.-x transform) "px," (.-y transform) "px) " "scale(" (.-k transform) ")")}}
+            {:transform (str "translate(" (.-x transform) "px," (.-y transform) "px) " "scale(" (.-k transform) ")")
+             :position "absolute"}}
           (for [note (js->clj notes :keywordize-keys true)]
             ^{:key (:id note)} [draggable-sticky note])]])))
 
