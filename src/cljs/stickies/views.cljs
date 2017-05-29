@@ -36,38 +36,70 @@
         [:div.sticky
           {:style
             {:background color
-             :transform (str "translate(" x "px," y "px) " "rotate(" rotate ")")}}
+             :transform (str "translate(" x "px," y "px) " "rotate(" rotate ")")}
+           :on-click
+            (fn [ev] (.stopPropagation ev) (re-frame/dispatch [:select-note id]))}
           [:div.sticky-header name]
           ; [:div.sticky-content content]
           [:div.sticky-content ""]]))))
 
+(defn sidepanel-component []
+  (let [selected-note (re-frame/subscribe [:selected-note])
+        change-handler
+          (fn [id attr]
+            (fn [ev] (re-frame/dispatch [:update-note id (assoc {} attr (.-target.value ev))])))]
+    (fn []
+      [:div.sticky-sidepanel {:on-click #(.stopPropagation %)}
+        (if @selected-note
+          [:div
+            {:style {:display "flex" :flex-direction "column" :height "100%"}}
+            [:div
+              [:input
+                {:placeholder "Color"
+                 :type "color"
+                 :value (:color @selected-note)
+                 :on-change (change-handler (:id @selected-note) :color)
+                 :style {:float "right"}}]
+              [:div {:style {:font-size "150%" :font-weight "bold"}} (:name @selected-note)]]
+            [:textarea.form-control
+              {:style
+                {:flex 1}
+               :value (:content @selected-note)
+               :on-change (change-handler (:id @selected-note) :content)}]]
+          [:div "Click on a note to view details..."])])))
+
+
 (defn container-component [{notes :notes connect-drop-target :connectDropTarget draggable-sticky :draggableSticky transform :transform}]
   (connect-drop-target
     (r/as-element
-      [:div.container
-        {:on-click
-          (fn [ev]
-            (let [scale (.-k transform)
-                  x (/ (- (.-clientX ev) (.-x transform)) scale)
-                  y (/ (- (.-clientY ev) (.-y transform)) scale)
-                  name (js/window.prompt "Enter a new note title")]
-               (when (not (clojure.string/blank? name))
-                 (let [id (str (clojure.string/replace name #"\.md$" "") ".md")]
-                    (re-frame/dispatch
-                      [:add-note
-                        {:id id
-                         :name id
-                         :x x
-                         :y y
-                         :color "#ffc"
-                         :rotate "0"
-                         :content ""}])))))}
-        [:div
-          {:style
-            {:transform (str "translate(" (.-x transform) "px," (.-y transform) "px) " "scale(" (.-k transform) ")")
-             :position "absolute"}}
-          (for [note (js->clj notes :keywordize-keys true)]
-            ^{:key (:id note)} [draggable-sticky note])]])))
+      [:div.app-container
+        [:div.notes-container
+          {:on-click
+            (fn [ev]
+              (let [scale (.-k transform)
+                    x (/ (- (.-clientX ev) (.-x transform)) scale)
+                    y (/ (- (.-clientY ev) (.-y transform)) scale)
+                    name (js/window.prompt "Enter a new note title")]
+                 (when (not (clojure.string/blank? name))
+                   (let [id (str (clojure.string/replace name #"\.md$" "") ".md")]
+                      (re-frame/dispatch
+                        [:add-note
+                          {:id id
+                           :name id
+                           :x x
+                           :y y
+                           :color "#ffc"
+                           :rotate "0"
+                           :content ""}])))))}
+          [:div
+            {:style
+              {:transform (str "translate(" (.-x transform) "px," (.-y transform) "px) " "scale(" (.-k transform) ")")
+               :position "absolute"
+               :left 0
+               :top 0}}
+            (for [note (js->clj notes :keywordize-keys true)]
+              ^{:key (:id note)} [draggable-sticky note])]]
+        [sidepanel-component]])))
 
 (defn main-container [props]
   (let [notes (re-frame/subscribe [:notes])
@@ -89,9 +121,11 @@
         el (.select js/d3 "#app")
         zoom (-> js/d3
                  .zoom
-                 (.filter #(or
-                             (= js/d3.event.type "wheel")
-                             (not (re-find #"sticky" js/d3.event.target.className))))
+                 (.filter #(and
+                             (not (contains? #{"input" "button" "textarea"} js/d3.event.target.type))
+                             (or
+                               (= js/d3.event.type "wheel")
+                               (not (re-find #"sticky" js/d3.event.target.className)))))
                  (.on "zoom" (fn [] (reset! transform (.-event.transform js/d3)))))
         initial-zoom (-> (.-zoomIdentity js/d3)
                          (.translate (.-x initial-transform) (.-y initial-transform))

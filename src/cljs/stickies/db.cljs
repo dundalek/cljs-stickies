@@ -2,11 +2,11 @@
 
 ; (defn assign-color [item]
 ;   (condp re-find item
-;     #"^kmx-in" "#ffc"
-;     #"^kmx-output" "#cfc"
-;     #"^kmx-storage" "#fcc"
-;     #"^kmx-misc" "#ccf"
-;     "#fcf"))
+;     #"^kmx-in" "#ffffcc"
+;     #"^kmx-output" "#ccffcc"
+;     #"^kmx-storage" "#ffcccc"
+;     #"^kmx-misc" "#ccccff"
+;     "#ffccff"))
 
 ; (def src-notes
 ;   (->> src
@@ -37,4 +37,5 @@
 
 (def default-db
   {:name "re-frame"
-   :notes notes})
+   :notes notes
+   :selected-note nil})

@@ -8,19 +8,27 @@
 }
 
 body {
-  font-family:arial,sans-serif;
-  font-size:100%;
   background:#eee;
-  color:#fff;
 }
 
-html, body, #app, .container {
+html, body, #app, .app-container, .notes-container {
     width: 100%;
     height: 100%;
+    overflow: hidden;
 }
 
-.container {
+.notes-container {
   position: relative;
+}
+
+.sticky-sidepanel {
+  position: fixed;
+  right: 0;
+  top: 0;
+  bottom: 0;
+  width: 400px;
+  background: #fdfdfd;
+  padding: 1em;
 }
 
 .sticky {
@@ -30,7 +38,7 @@ html, body, #app, .container {
   background:#ffc;
   display:block;
   // height:10em;
-  width:10em;
+  width:15em;
   padding:1em;
   -moz-box-shadow:5px 5px 7px rgba(33,33,33,1);
   -webkit-box-shadow: 5px 5px 7px rgba(33,33,33,.7);

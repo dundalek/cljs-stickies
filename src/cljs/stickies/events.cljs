@@ -49,17 +49,14 @@
    (assoc-in db [:notes (:id data)] data)))
 
 (re-frame/reg-event-db
+ :select-note
+ (fn  [db [_ id]]
+   (assoc db :selected-note id)))
+
+(re-frame/reg-event-db
  :set-notes
  (fn  [db [_ notes]]
    (->> notes
      (map #(assoc % :rotate "0"))
      (reduce #(assoc %1 (:id %2) %2) {})
      (assoc db :notes))))
-
-(re-frame/reg-event-db
- :update-note
- [update-item-interceptor]
- (fn  [db [_ id data]]
-   (let [next-db (update-in db [:notes id] #(merge % data))]
-      ; (js/console.log (prn-str (vals (:notes next-db))))
-      next-db)))

@@ -11,3 +11,9 @@
  :notes
  (fn [db]
    (vals (:notes db))))
+
+(re-frame/reg-sub
+ :selected-note
+ (fn [db]
+   (when-let [selected (:selected-note db)]
+     ((:notes db) selected))))
