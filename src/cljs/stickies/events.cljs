@@ -3,13 +3,15 @@
               [ajax.core :refer [PUT]]
               [stickies.db :as db]))
 
+(def dirty-notes (atom {}))
+
 (defn handler [response]
   (.log js/console (str response)))
 
 (defn error-handler [{:keys [status status-text]}]
   (.log js/console (str "something bad happened: " status " " status-text)))
 
-(defn update-item [id data]
+(defn update-item-request [id data]
    (PUT (str "http://localhost:3030/item/" id)
       {:format :json
        :params data
@@ -18,16 +20,33 @@
        :handler handler
        :error-handler error-handler}))
 
+(defn flush-dirty-notes []
+  (let [dirty @dirty-notes]
+    (reset! dirty-notes {})
+    (doseq [[id data] dirty]
+      (update-item-request id data))))
+
+(def flush-dirty-notes-throttled
+  (.throttle js/_ flush-dirty-notes 5000 #js{:trailing true :leading false}))
+
+(defn update-item [id data]
+  (swap! dirty-notes assoc id data))
+
 (def update-item-interceptor
    (re-frame/after
       (fn [db [_ id data]]
-         (update-item id (dissoc ((:notes db) id) :rotate)))))
+         (update-item id (dissoc ((:notes db) id) :rotate))
+         (flush-dirty-notes-throttled))))
 
 (def add-item-interceptor
    (re-frame/after
       (fn [db [_ data]]
         (let [id (:id data)]
-          (update-item id (dissoc ((:notes db) id) :rotate))))))
+          (update-item id (dissoc ((:notes db) id) :rotate))
+          (flush-dirty-notes)))))
+
+(def flush-dirty-interceptor
+  (re-frame/after flush-dirty-notes))
 
 (re-frame/reg-event-db
  :initialize-db
@@ -50,6 +69,7 @@
 
 (re-frame/reg-event-db
  :select-note
+ [flush-dirty-interceptor]
  (fn  [db [_ id]]
    (assoc db :selected-note id)))
 

@@ -88,7 +88,7 @@
                            :name id
                            :x x
                            :y y
-                           :color "#ffc"
+                           :color "#ffffcc"
                            :rotate "0"
                            :content ""}])))))}
           [:div
