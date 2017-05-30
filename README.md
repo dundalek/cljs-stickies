@@ -4,6 +4,10 @@ A [re-frame](https://github.com/Day8/re-frame) application designed to ... well,
 
 ## Development Mode
 
+```
+lein deps
+```
+
 ### Compile css:
 
 Compile css file once.
