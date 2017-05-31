@@ -38,4 +38,5 @@
 (def default-db
   {:name "re-frame"
    :notes notes
-   :selected-note nil})
+   :selected-note nil
+   :edit-mode false})

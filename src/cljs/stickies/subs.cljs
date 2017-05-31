@@ -8,6 +8,10 @@
    (:name db)))
 
 (re-frame/reg-sub
+ :edit-mode
+ :edit-mode)
+
+(re-frame/reg-sub
  :notes
  (fn [db]
    (vals (:notes db))))

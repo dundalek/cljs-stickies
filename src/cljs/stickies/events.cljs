@@ -80,3 +80,8 @@
      (map #(assoc % :rotate "0"))
      (reduce #(assoc %1 (:id %2) %2) {})
      (assoc db :notes))))
+
+(re-frame/reg-event-db
+ :toggle-edit-mode
+ (fn  [db _]
+   (update db :edit-mode not)))

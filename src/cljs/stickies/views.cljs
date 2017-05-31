@@ -2,6 +2,12 @@
     (:require [re-frame.core :as re-frame]
               [reagent.core :as r]))
 
+(def md (js/Remarkable. #js{:linkify true}))
+
+(defn markdown-render
+  ([content] (markdown-render content {}))
+  ([content props] [:div (assoc props :dangerouslySetInnerHTML {:__html (->> content str (.render md))})]))
+
 (def initial-transform #js{:x 200 :y 90 :k 0.35})
 (def transform (r/atom initial-transform))
 
@@ -45,6 +51,7 @@
 
 (defn sidepanel-component []
   (let [selected-note (re-frame/subscribe [:selected-note])
+        edit-mode (re-frame/subscribe [:edit-mode])
         change-handler
           (fn [id attr]
             (fn [ev] (re-frame/dispatch [:update-note id (assoc {} attr (.-target.value ev))])))]
@@ -54,18 +61,29 @@
           [:div
             {:style {:display "flex" :flex-direction "column" :height "100%"}}
             [:div
-              [:input
-                {:placeholder "Color"
-                 :type "color"
-                 :value (:color @selected-note)
-                 :on-change (change-handler (:id @selected-note) :color)
-                 :style {:float "right"}}]
+              [:div
+                {:style {:float "right"}}
+                [:a
+                  {:style {:margin-right "1em" :cursor "pointer"}
+                   :on-click (fn [ev] (.preventDefault ev) (re-frame/dispatch [:toggle-edit-mode]))}
+                  (if @edit-mode "view" "edit")]
+                [:input
+                  {:placeholder "Color"
+                   :type "color"
+                   :value (:color @selected-note)
+                   :on-change (change-handler (:id @selected-note) :color)}]]
               [:div {:style {:font-size "150%" :font-weight "bold"}} (:name @selected-note)]]
-            [:textarea.form-control
-              {:style
-                {:flex 1}
-               :value (:content @selected-note)
-               :on-change (change-handler (:id @selected-note) :content)}]]
+            (if @edit-mode
+              [:textarea.form-control
+                {:style
+                  {:flex 1}
+                 :value (:content @selected-note)
+                 :on-change (change-handler (:id @selected-note) :content)}]
+              (markdown-render
+                (:content @selected-note)
+                {:style {:overflow "auto"
+                         :margin-right "-1em"
+                         :padding-right "1em"}}))]
           [:div "Click on a note to view details..."])])))
 
 
@@ -121,11 +139,9 @@
         el (.select js/d3 "#app")
         zoom (-> js/d3
                  .zoom
-                 (.filter #(and
-                             (not (contains? #{"input" "button" "textarea"} js/d3.event.target.type))
-                             (or
-                               (= js/d3.event.type "wheel")
-                               (not (re-find #"sticky" js/d3.event.target.className)))))
+                 (.filter #(or
+                             (re-find #"notes-container" js/d3.event.target.className)
+                             (and (re-find #"sticky" js/d3.event.target.className) (= js/d3.event.type "wheel"))))
                  (.on "zoom" (fn [] (reset! transform (.-event.transform js/d3)))))
         initial-zoom (-> (.-zoomIdentity js/d3)
                          (.translate (.-x initial-transform) (.-y initial-transform))
