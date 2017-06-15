@@ -5,7 +5,7 @@
 (nodejs/enable-util-print!)
 
 (def port 3030)
-(def dir "/home/me/github/kmx/data")
+(def dir "./data")
 
 (def fs (js/require "mz/fs"))
 (def fm (js/require "front-matter"))

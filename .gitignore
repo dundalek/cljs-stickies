@@ -9,3 +9,4 @@ out
 .nrepl-port
 /node_modules
 /build
+/data
