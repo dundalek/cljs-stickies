@@ -1,37 +1,21 @@
 # stickies
 
-A [re-frame](https://github.com/Day8/re-frame) application designed to ... well, that part is up to you.
+Sticky notes demo app, supports dragging around and markdown content.
+
+![](./docs/img/stickies-screenshot.png)
+
 
 ## Development Mode
 
+Install dependencies:
 ```
 lein deps
 ```
 
-### Compile css:
-
-Compile css file once.
-
+Run app in dev mode:
 ```
-lein less once
+lein dev
 ```
-
-Automatically recompile css file on change.
-
-```
-lein less auto
-```
-
-### Run application:
-
-```
-lein clean
-lein figwheel dev
-```
-
-Figwheel will automatically push cljs changes to the browser.
-
-Wait a bit, then browse to [http://localhost:3449](http://localhost:3449).
 
 ### Run tests:
 
@@ -45,9 +29,8 @@ The above command assumes that you have [phantomjs](https://www.npmjs.com/packag
 ## Production Build
 
 
-To compile clojurescript to javascript:
+To compile clojurescript and less styles:
 
 ```
-lein clean
-lein cljsbuild once min
+lein build
 ```
